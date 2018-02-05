@@ -267,7 +267,7 @@
        <item row="1" column="1">
         <widget class="QPushButton" name="blockButton">
          <property name="styleSheet">
-          <string notr="true">background-color: rgb(255, 175, 0);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>Jump to Block</string>
@@ -290,7 +290,7 @@
        <item row="13" column="1">
         <widget class="QPushButton" name="txButton">
          <property name="styleSheet">
-          <string notr="true">background-color: rgb(255, 175, 0);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>Decode Transaction</string>

@@ -988,13 +988,13 @@ int64_t GetProofOfStakeReward(int64_t nFees, int64_t nHeight)
 {
     int64_t nSubsidy= 0 * COIN;
 
-    if(nHeight > 50 && nHeight % 2)
-    {
-        nSubsidy = 10 * COIN;
-    }
     if(nHeight > 50)
     {
         nSubsidy = 1 * COIN;
+    }
+    else if(nHeight > 11000 && nHeight % 2)
+    {
+        nSubsidy = 10 * COIN;
     }
 
     LogPrint("creation", "GetProofOfStakeReward(): create=%s nSubsidy=%d\n", FormatMoney(nSubsidy), nSubsidy);

@@ -32,6 +32,7 @@
 #include "wallet.h"
 #include "init.h"
 #include "ui_interface.h"
+#include "blockbrowser.h"
 
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -78,7 +79,8 @@ PulsarGUI::PulsarGUI(QWidget *parent):
     notificator(0),
     rpcConsole(0),
     prevBlocks(0),
-    nWeight(0)
+    nWeight(0),
+    blockBrowserPage(0)
 {
     resize(850+95, 550);
     setWindowTitle(tr("Pulsar") + " - " + tr("Wallet"));
@@ -106,6 +108,8 @@ PulsarGUI::PulsarGUI(QWidget *parent):
 
     // Create tabs
     overviewPage = new OverviewPage();
+    blockBrowserPage = new BlockBrowser(this);
+
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -127,6 +131,7 @@ PulsarGUI::PulsarGUI(QWidget *parent):
     centralStackedWidget->addWidget(addressBookPage);
     centralStackedWidget->addWidget(receiveCoinsPage);
     centralStackedWidget->addWidget(sendCoinsPage);
+    centralStackedWidget->addWidget(blockBrowserPage);
 
     QWidget *centralWidget = new QWidget();
     QVBoxLayout *centralLayout = new QVBoxLayout(centralWidget);
@@ -205,6 +210,9 @@ PulsarGUI::PulsarGUI(QWidget *parent):
 
     rpcConsole = new RPCConsole(this);
     connect(openRPCConsoleAction, SIGNAL(triggered()), rpcConsole, SLOT(show()));
+
+    //connect(blockAction, SIGNAL(triggered()), blockBrowserPage, SLOT(gotoBlockBrowser()));
+
     // prevents an oben debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
@@ -212,6 +220,8 @@ PulsarGUI::PulsarGUI(QWidget *parent):
     connect(addressBookPage, SIGNAL(verifyMessage(QString)), this, SLOT(gotoVerifyMessageTab(QString)));
     // Clicking on "Sign Message" in the receive coins page sends you to the sign message tab
     connect(receiveCoinsPage, SIGNAL(signMessage(QString)), this, SLOT(gotoSignMessageTab(QString)));
+    // Clicking on "Block Explorer" in the transaction page sends you to the blockbrowser
+    connect(transactionView, SIGNAL(blockBrowserSignal(QString)), this, SLOT(gotoBlockBrowser(QString)));
 
     gotoOverviewPage();
 }
@@ -259,6 +269,12 @@ void PulsarGUI::createActions()
     addressBookAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     tabGroup->addAction(addressBookAction);
 
+    blockAction = new QAction(QIcon(":/icons/blockbrowser"), tr("&Block Browser"), this);
+    blockAction->setToolTip(tr("Explore the BlockChain"));
+    blockAction->setCheckable(true);
+    blockAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    tabGroup->addAction(blockAction);
+
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(gotoOverviewPage()));
     connect(receiveCoinsAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -269,6 +285,8 @@ void PulsarGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(addressBookAction, SIGNAL(triggered()), this, SLOT(gotoAddressBookPage()));
+    connect(blockAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(blockAction, SIGNAL(triggered()), this, SLOT(gotoBlockBrowser()));
 
     quitAction = new QAction(tr("E&xit"), this);
     quitAction->setToolTip(tr("Quit application"));
@@ -361,15 +379,16 @@ void PulsarGUI::createToolBars()
     toolbar = new QToolBar(tr("Tabs toolbar"));
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     toolbar->setContextMenuPolicy(Qt::PreventContextMenu);
+    
+    QWidget* header = new QWidget();
+    header->setMinimumSize(160, 116);
+    header->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    header->setStyleSheet("QWidget {background-repeat: no-repeat; background-image: url(:/images/header); background-position: top center; }");
+    toolbar->addWidget(header);
 
     if (fUseBlackTheme)
     {
-        QWidget* header = new QWidget();
-        header->setMinimumSize(160, 116);
-        header->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         header->setStyleSheet("QWidget { background-color: rgb(24,26,30); background-repeat: no-repeat; background-image: url(:/images/header); background-position: top center; }");
-        toolbar->addWidget(header);
-        toolbar->addWidget(makeToolBarSpacer());
     }
 
     toolbar->addAction(overviewAction);
@@ -377,6 +396,7 @@ void PulsarGUI::createToolBars()
     toolbar->addAction(sendCoinsAction);
     toolbar->addAction(historyAction);
     toolbar->addAction(addressBookAction);
+    toolbar->addAction(blockAction);
 
     toolbar->addWidget(makeToolBarSpacer());
 
@@ -451,6 +471,7 @@ void PulsarGUI::setWalletModel(WalletModel *walletModel)
         receiveCoinsPage->setModel(walletModel->getAddressTableModel());
         sendCoinsPage->setModel(walletModel);
         signVerifyMessageDialog->setModel(walletModel);
+        blockBrowserPage->setModel(clientModel);
 
         setEncryptionStatus(walletModel->getEncryptionStatus());
         connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(setEncryptionStatus(int)));
@@ -790,6 +811,20 @@ void PulsarGUI::gotoAddressBookPage()
     exportAction->setEnabled(true);
     disconnect(exportAction, SIGNAL(triggered()), 0, 0);
     connect(exportAction, SIGNAL(triggered()), addressBookPage, SLOT(exportClicked()));
+}
+
+void PulsarGUI::gotoBlockBrowser(QString transactionId)
+{
+    blockAction->setChecked(true);
+    if(!transactionId.isEmpty())
+    {
+        blockBrowserPage->setTransactionId(transactionId);
+    }
+    centralStackedWidget->setCurrentWidget(blockBrowserPage);
+
+    exportAction->setEnabled(true);
+    disconnect(exportAction, SIGNAL(triggered()), 0, 0);
+    connect(exportAction, SIGNAL(triggered()), blockBrowserPage, SLOT(exportClicked()));
 }
 
 void PulsarGUI::gotoReceiveCoinsPage()
