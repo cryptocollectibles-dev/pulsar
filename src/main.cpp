@@ -992,7 +992,7 @@ int64_t GetProofOfStakeReward(int64_t nFees, int64_t nHeight)
     {
         nSubsidy = 1 * COIN;
     }
-    else if(nHeight > 11000 && nHeight % 2)
+    else if(nHeight > 12000 && nHeight % 2)
     {
         nSubsidy = 10 * COIN;
     }
