@@ -10,7 +10,7 @@ src/build.h
 *.orig
 *.o
 *.patch
-.honey
+.pulsar
 #compilation and Qt preprocessor part
 *.qm
 .qmake.stash

@@ -75,7 +75,7 @@ namespace GUIUtil
 
     // Open debug.log
     void openDebugLogfile();
-    // Open honey.conf
+    // Open pulsar.conf
     void openConfigfile();
     /** Qt event filter that intercepts ToolTipChange events, and replaces the tooltip with a rich text
       representation if needed. This assures that Qt can word-wrap long tooltip messages.

@@ -1,8 +1,6 @@
 
 Pulsar development tree
 
-Pulsar is a PoS-based cryptocurrency.
-
 Development process
 ===========================
 
